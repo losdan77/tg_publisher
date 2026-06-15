@@ -1,0 +1,37 @@
+channels:
+  - key: test_ai_news
+    title: "Test AI News"
+    enabled: true
+    chat_id: "@your_channel_username"
+    timezone: "Europe/Moscow"
+    schedule: "0 10 * * *"
+    prompt_file: "prompts/test_ai_news.md"
+    model: null
+    max_output_tokens: 1200
+    reasoning_effort: low
+    text_verbosity: low
+    telegram:
+      parse_mode: "HTML"
+      disable_web_page_preview: true
+      protect_content: false
+    min_seconds_between_posts: 300
+    context:
+      topic: "AI, automation, and useful tools"
+      audience: "founders, developers, and operators"
+      style: "practical, concise, calm"
+
+  - key: second_channel
+    title: "Second Channel"
+    enabled: false
+    chat_id: "-1001234567890"
+    timezone: "Europe/Moscow"
+    schedule: "30 18 * * 1-5"
+    prompt_file: "prompts/second_channel.md"
+    max_output_tokens: 900
+    telegram:
+      parse_mode: "HTML"
+      disable_web_page_preview: true
+    context:
+      topic: "your second topic"
+      audience: "your audience"
+

@@ -1,0 +1,22 @@
+channels:
+  - key: test_ai_news
+    title: "Test AI News"
+    enabled: false
+    chat_id: "@your_channel_username"
+    timezone: "Europe/Moscow"
+    schedule: "0 10 * * *"
+    prompt_file: "prompts/test_ai_news.md"
+    model: null
+    max_output_tokens: 1200
+    reasoning_effort: low
+    text_verbosity: low
+    telegram:
+      parse_mode: "HTML"
+      disable_web_page_preview: true
+      protect_content: false
+    min_seconds_between_posts: 300
+    context:
+      topic: "AI, automation, and useful tools"
+      audience: "founders, developers, and operators"
+      style: "practical, concise, calm"
+
