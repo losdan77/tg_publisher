@@ -4,6 +4,7 @@ set -eu
 : "${DOMAIN:?DOMAIN is required}"
 : "${NGINX_BASIC_AUTH_USER:?NGINX_BASIC_AUTH_USER is required}"
 : "${NGINX_BASIC_AUTH_PASSWORD:?NGINX_BASIC_AUTH_PASSWORD is required}"
+: "${ADMIN_API_TOKEN:?ADMIN_API_TOKEN is required}"
 
 mkdir -p /etc/nginx/auth /var/www/certbot "/etc/letsencrypt/live/${DOMAIN}"
 
@@ -22,4 +23,3 @@ if [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ] || \
     -out "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" \
     -subj "/CN=${DOMAIN}" >/dev/null 2>&1
 fi
-

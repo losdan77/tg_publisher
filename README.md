@@ -105,6 +105,8 @@ id -g
 bash scripts/deploy.sh
 ```
 
+Если в `.env` забыта обязательная переменная, deploy остановится до запуска контейнеров и покажет имя пропущенного поля. Например, без `TELEGRAM_WEBHOOK_SECRET` приложение не сможет стартовать.
+
 6. Выпусти HTTPS-сертификат:
 
 ```bash
@@ -248,8 +250,30 @@ docker compose ps
 docker compose logs -f tg-publisher
 docker compose logs -f nginx
 bash scripts/deploy.sh
+bash scripts/check_env.sh .env
 bash scripts/init_https.sh
 bash scripts/set_webhook_docker.sh
+```
+
+## Частые ошибки
+
+`telegram_webhook_secret Field required` в логах `tg-publisher` означает, что в `.env` или GitHub secret `ENV_FILE` нет строки:
+
+```env
+TELEGRAM_WEBHOOK_SECRET=long-random-url-secret
+```
+
+`unknown "admin_api_token" variable` в логах nginx означает, что nginx получил конфиг без подставленного `ADMIN_API_TOKEN`. Проверь, что в `.env` или `ENV_FILE` есть:
+
+```env
+ADMIN_API_TOKEN=long-random-admin-token
+```
+
+После исправления `.env` на VPS перезапусти:
+
+```bash
+cd /opt/tg-publisher
+bash scripts/deploy.sh
 ```
 
 ## Локальная проверка

@@ -18,6 +18,8 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
+bash scripts/check_env.sh .env
+
 mkdir -p data/config data/prompts data/certbot/www data/certbot/conf
 
 if [ ! -f data/config/channels.yaml ]; then
@@ -34,4 +36,3 @@ docker compose config >/dev/null
 docker compose up -d --build --remove-orphans
 docker image prune -f --filter "until=168h" >/dev/null || true
 docker compose ps
-
