@@ -18,6 +18,23 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
+read_env() {
+  local key="$1"
+  local line
+  line="$(grep -E "^${key}=" .env | tail -n 1 || true)"
+  if [ -z "$line" ]; then
+    return 1
+  fi
+
+  line="${line#*=}"
+  line="${line%$'\r'}"
+  line="${line%\"}"
+  line="${line#\"}"
+  line="${line%\'}"
+  line="${line#\'}"
+  printf "%s" "$line"
+}
+
 bash scripts/check_env.sh .env
 
 mkdir -p data/config data/prompts data/certbot/www data/certbot/conf
@@ -30,6 +47,20 @@ fi
 if [ ! -f data/prompts/test_ai_news.md ]; then
   cp -a prompts/. data/prompts/
   echo "Initialized data/prompts from repository prompt templates."
+fi
+
+app_uid="$(read_env APP_UID || printf "1000")"
+app_gid="$(read_env APP_GID || printf "1000")"
+
+if [ "$(id -u)" -eq 0 ]; then
+  chown -R "$app_uid:$app_gid" data/config data/prompts
+  echo "Set data/config and data/prompts owner to ${app_uid}:${app_gid}."
+else
+  if [ ! -w data/config ] || [ ! -w data/prompts ]; then
+    echo "data/config or data/prompts is not writable by the current user." >&2
+    echo "Run as root once: chown -R ${app_uid}:${app_gid} data/config data/prompts" >&2
+    exit 1
+  fi
 fi
 
 docker compose config >/dev/null

@@ -255,6 +255,16 @@ bash scripts/init_https.sh
 bash scripts/set_webhook_docker.sh
 ```
 
+Если веб-панель не сохраняет prompt и в логах есть `Permission denied: '/app/prompts/...'`, значит `data/prompts` или `data/config` на VPS принадлежат не тому пользователю. Исправить:
+
+```bash
+cd /opt/tg-publisher
+chown -R 1000:1000 data/config data/prompts
+bash scripts/deploy.sh
+```
+
+Если в `.env` стоят другие `APP_UID` и `APP_GID`, используй их вместо `1000:1000`.
+
 ## Частые ошибки
 
 `telegram_webhook_secret Field required` в логах `tg-publisher` означает, что в `.env` или GitHub secret `ENV_FILE` нет строки:

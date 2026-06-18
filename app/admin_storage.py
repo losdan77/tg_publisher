@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 from app.config import ChannelConfig, ChannelsConfig, load_channels_config, resolve_prompt_path, save_channels_config
 from app.settings import Settings
@@ -16,7 +17,12 @@ def load_live_config(settings: Settings) -> ChannelsConfig:
 
 
 def save_live_config(settings: Settings, config: ChannelsConfig) -> None:
-    save_channels_config(settings.resolved_channels_config_path, config)
+    try:
+        save_channels_config(settings.resolved_channels_config_path, config)
+    except OSError as exc:
+        raise AdminStorageError(
+            storage_error_message("write config file", settings.resolved_channels_config_path, exc)
+        ) from exc
 
 
 def upsert_channel(
@@ -74,14 +80,51 @@ def read_prompt(project_root: Path, prompt_file: str) -> str:
     path = assert_safe_prompt_path(project_root, prompt_file)
     if not path.exists():
         return ""
-    return path.read_text(encoding="utf-8")
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise AdminStorageError(storage_error_message("read prompt file", path, exc)) from exc
 
 
 def write_prompt(project_root: Path, prompt_file: str, content: str) -> str:
     path = assert_safe_prompt_path(project_root, prompt_file)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8", newline="\n")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8", newline="\n")
+    except OSError as exc:
+        raise AdminStorageError(storage_error_message("write prompt file", path, exc)) from exc
     return path.relative_to(project_root).as_posix()
+
+
+def storage_status(settings: Settings) -> dict[str, object]:
+    config_path = settings.resolved_channels_config_path
+    prompts_dir = settings.project_root / "prompts"
+
+    return {
+        "config_path": str(config_path),
+        "config_parent_writable": is_writable_directory(config_path.parent),
+        "config_file_writable": is_writable_file(config_path),
+        "prompts_dir": str(prompts_dir),
+        "prompts_dir_writable": is_writable_directory(prompts_dir),
+    }
+
+
+def is_writable_directory(path: Path) -> bool:
+    return path.exists() and path.is_dir() and os.access(path, os.W_OK)
+
+
+def is_writable_file(path: Path) -> bool:
+    if path.exists():
+        return path.is_file() and os.access(path, os.W_OK)
+    return is_writable_directory(path.parent)
+
+
+def storage_error_message(action: str, path: Path, exc: OSError) -> str:
+    return (
+        f"Cannot {action}: {path}. {exc.strerror or exc}. "
+        "On VPS, check ownership of ./data/config and ./data/prompts. "
+        "They must be writable by APP_UID:APP_GID from .env."
+    )
 
 
 def assert_safe_prompt_path(project_root: Path, prompt_file: str) -> Path:

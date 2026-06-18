@@ -9,9 +9,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
 from app.admin_storage import (
+    AdminStorageError,
     delete_channel,
     list_prompt_files,
     read_prompt,
+    storage_status,
     upsert_channel,
     write_prompt,
 )
@@ -125,7 +127,10 @@ async def admin_prompt(
     _: None = Depends(require_admin_token),
 ) -> dict[str, str]:
     settings: Settings = request.app.state.settings
-    return {"path": path, "content": read_prompt(settings.project_root, path)}
+    try:
+        return {"path": path, "content": read_prompt(settings.project_root, path)}
+    except AdminStorageError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.post("/api/admin/prompts")
@@ -135,7 +140,10 @@ async def save_admin_prompt(
     _: None = Depends(require_admin_token),
 ) -> dict[str, str]:
     settings: Settings = request.app.state.settings
-    path = write_prompt(settings.project_root, payload.path, payload.content)
+    try:
+        path = write_prompt(settings.project_root, payload.path, payload.content)
+    except AdminStorageError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     return {"ok": "true", "path": path}
 
 
@@ -146,10 +154,14 @@ async def save_admin_channel(
     _: None = Depends(require_admin_token),
 ) -> dict[str, Any]:
     settings: Settings = request.app.state.settings
-    if payload.prompt_content is not None:
-        write_prompt(settings.project_root, str(payload.channel.prompt_file), payload.prompt_content)
+    try:
+        if payload.prompt_content is not None:
+            write_prompt(settings.project_root, str(payload.channel.prompt_file), payload.prompt_content)
 
-    channels_config = upsert_channel(settings, payload.channel, payload.original_key)
+        channels_config = upsert_channel(settings, payload.channel, payload.original_key)
+    except AdminStorageError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
     apply_reloaded_config(request, channels_config)
     state = build_admin_state(request)
     state["selected_key"] = payload.channel.key
@@ -163,7 +175,10 @@ async def delete_admin_channel(
     _: None = Depends(require_admin_token),
 ) -> dict[str, Any]:
     settings: Settings = request.app.state.settings
-    channels_config = delete_channel(settings, channel_key)
+    try:
+        channels_config = delete_channel(settings, channel_key)
+    except AdminStorageError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     apply_reloaded_config(request, channels_config)
     return build_admin_state(request)
 
@@ -178,6 +193,7 @@ async def health(request: Request) -> dict[str, Any]:
         "enabled_channels": len(channels_config.enabled_channels),
         "scheduler_running": scheduler.scheduler.running,
         "jobs": scheduler.jobs_snapshot(),
+        "storage": storage_status(request.app.state.settings),
     }
 
 
@@ -329,4 +345,5 @@ def build_admin_state(request: Request) -> dict[str, Any]:
         "config_path": str(settings.resolved_channels_config_path),
         "public_base_url": settings.public_base_url,
         "dry_run": settings.dry_run,
+        "storage": storage_status(settings),
     }
