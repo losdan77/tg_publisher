@@ -37,7 +37,6 @@ required_vars=(
   OPENAI_API_KEY
   TELEGRAM_BOT_TOKEN
   TELEGRAM_WEBHOOK_SECRET
-  CHANNELS_CONFIG_PATH
 )
 
 missing=()
@@ -71,4 +70,3 @@ if [ "${#placeholders[@]}" -gt 0 ]; then
 fi
 
 echo "Environment file OK: $env_file"
-
