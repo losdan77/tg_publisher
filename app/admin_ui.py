@@ -1,4 +1,4 @@
-ADMIN_HTML = """
+ADMIN_HTML = r"""
 <!doctype html>
 <html lang="ru">
 <head>
@@ -8,16 +8,21 @@ ADMIN_HTML = """
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f7f9;
+      --bg: #f5f7fa;
       --panel: #ffffff;
-      --text: #18202a;
-      --muted: #657386;
-      --line: #d9e0e8;
-      --accent: #1769aa;
-      --accent-strong: #0f4d7c;
+      --panel-soft: #f8fafc;
+      --text: #16202a;
+      --muted: #64748b;
+      --line: #d8e0ea;
+      --accent: #1267a8;
+      --accent-strong: #0b4e82;
       --danger: #b42318;
+      --danger-bg: #fff1f0;
       --ok: #067647;
-      --shadow: 0 8px 30px rgba(28, 39, 49, 0.08);
+      --ok-bg: #e7f8ee;
+      --warn: #9a6700;
+      --warn-bg: #fff6d7;
+      --shadow: 0 10px 28px rgba(22, 32, 42, 0.08);
     }
 
     * { box-sizing: border-box; }
@@ -28,41 +33,44 @@ ADMIN_HTML = """
       color: var(--text);
     }
     header {
-      background: #111827;
+      background: #101820;
       color: #fff;
       padding: 18px 28px;
       display: flex;
       justify-content: space-between;
-      gap: 16px;
+      gap: 18px;
       align-items: center;
     }
-    header h1 {
-      font-size: 20px;
-      margin: 0;
-      font-weight: 700;
-      letter-spacing: 0;
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    header h1 { font-size: 20px; font-weight: 750; }
+    header p {
+      margin: 4px 0 0;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.35;
     }
-    header .meta {
-      color: #c8d2df;
+    .top-meta {
+      color: #e2e8f0;
       font-size: 13px;
       text-align: right;
+      line-height: 1.45;
     }
     main {
       display: grid;
-      grid-template-columns: 320px minmax(0, 1fr);
-      min-height: calc(100vh - 68px);
+      grid-template-columns: 340px minmax(0, 1fr);
+      min-height: calc(100vh - 76px);
     }
     aside {
       border-right: 1px solid var(--line);
-      background: #fbfcfd;
-      padding: 20px;
+      background: #fbfcfe;
+      padding: 18px;
     }
     .workspace {
-      padding: 24px;
-      max-width: 1180px;
+      padding: 22px;
+      max-width: 1220px;
       width: 100%;
     }
-    .panel {
+    .panel, .side-box {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -73,20 +81,22 @@ ADMIN_HTML = """
       border-bottom: 1px solid var(--line);
       display: flex;
       justify-content: space-between;
-      gap: 12px;
-      align-items: center;
+      gap: 16px;
+      align-items: flex-start;
     }
-    .panel-head h2 {
-      margin: 0;
-      font-size: 18px;
-      letter-spacing: 0;
+    .panel-head h2 { font-size: 20px; }
+    .panel-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
     }
     .panel-body { padding: 20px; }
     .toolbar {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 16px;
+      align-items: center;
     }
     button {
       border: 1px solid var(--line);
@@ -103,16 +113,48 @@ ADMIN_HTML = """
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
-      font-weight: 650;
+      font-weight: 700;
     }
     button.primary:hover { background: var(--accent-strong); }
     button.danger {
       color: var(--danger);
-      border-color: #f1b8b1;
+      border-color: #efb5ae;
     }
     button:disabled {
       opacity: .55;
       cursor: not-allowed;
+    }
+    .side-box {
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: none;
+    }
+    .side-box h2 {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+    .side-box p, .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 0;
+    }
+    .system-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .system-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .system-row strong {
+      color: var(--text);
+      font-weight: 700;
+      text-align: right;
     }
     .channel-list {
       display: grid;
@@ -121,21 +163,21 @@ ADMIN_HTML = """
     }
     .channel-item {
       width: 100%;
-      min-height: 66px;
+      min-height: 76px;
       text-align: left;
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 11px 12px;
       background: #fff;
     }
     .channel-item.active {
       border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(23, 105, 170, 0.12);
+      box-shadow: 0 0 0 2px rgba(18, 103, 168, 0.13);
     }
     .channel-title {
       display: flex;
       justify-content: space-between;
       gap: 8px;
-      font-weight: 700;
+      font-weight: 750;
       margin-bottom: 5px;
     }
     .channel-sub {
@@ -151,29 +193,51 @@ ADMIN_HTML = """
       border-radius: 999px;
       padding: 0 8px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 750;
       white-space: nowrap;
     }
-    .badge.on { color: var(--ok); background: #dcfae6; }
+    .badge.on { color: var(--ok); background: var(--ok-bg); }
     .badge.off { color: var(--muted); background: #edf1f5; }
+    .badge.warn { color: var(--warn); background: var(--warn-bg); }
+    .badge.err { color: var(--danger); background: var(--danger-bg); }
     form {
       display: grid;
-      gap: 18px;
+      gap: 20px;
+    }
+    .section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 16px;
+    }
+    .section h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .section-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 0 0 14px;
     }
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
     }
-    .grid.three {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    label {
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    label.field {
       display: grid;
       gap: 6px;
-      color: var(--muted);
+      color: var(--text);
       font-size: 13px;
-      font-weight: 650;
+      font-weight: 750;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 500;
     }
     input, select, textarea {
       width: 100%;
@@ -186,37 +250,58 @@ ADMIN_HTML = """
       padding: 10px 11px;
       outline: none;
     }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(18, 103, 168, 0.12);
+    }
     input[type="checkbox"] {
       width: 18px;
       height: 18px;
       padding: 0;
     }
     textarea {
-      min-height: 130px;
+      min-height: 124px;
       resize: vertical;
       line-height: 1.45;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
-    textarea.prompt {
-      min-height: 360px;
-    }
+    textarea.prompt { min-height: 360px; }
     .check-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      padding-top: 24px;
-      color: var(--text);
-      font-weight: 650;
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+    .check-row strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 3px;
     }
     .status {
-      min-height: 26px;
+      min-height: 28px;
       color: var(--muted);
       font-size: 14px;
-      margin-top: 12px;
+      margin-top: 14px;
       white-space: pre-wrap;
+      line-height: 1.45;
     }
-    .status.ok { color: var(--ok); }
-    .status.err { color: var(--danger); }
+    .status.ok, .notice.ok { color: var(--ok); background: var(--ok-bg); border-color: #abefc6; }
+    .status.err, .notice.err { color: var(--danger); background: var(--danger-bg); border-color: #fecdca; }
+    .status.warn, .notice.warn { color: var(--warn); background: var(--warn-bg); border-color: #f6d58a; }
+    .notice {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--muted);
+      background: var(--panel-soft);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 12px;
+    }
     .preview {
       white-space: pre-wrap;
       background: #f8fafc;
@@ -225,30 +310,63 @@ ADMIN_HTML = """
       padding: 14px;
       color: #334155;
       line-height: 1.45;
-      max-height: 220px;
+      max-height: 240px;
       overflow: auto;
+      margin-top: 12px;
     }
-    @media (max-width: 900px) {
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 0;
+    }
+    summary {
+      cursor: pointer;
+      padding: 14px 16px;
+      font-weight: 750;
+    }
+    details .details-body {
+      border-top: 1px solid var(--line);
+      padding: 16px;
+    }
+    @media (max-width: 960px) {
       header { align-items: flex-start; flex-direction: column; }
-      header .meta { text-align: left; }
+      .top-meta { text-align: left; }
       main { grid-template-columns: 1fr; }
       aside { border-right: 0; border-bottom: 1px solid var(--line); }
       .workspace { padding: 16px; }
+      .panel-head { flex-direction: column; }
       .grid, .grid.three { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>TG Publisher</h1>
-    <div class="meta" id="meta">Загрузка...</div>
+    <div>
+      <h1>TG Publisher</h1>
+      <p>Панель управления автопубликацией в Telegram-каналы.</p>
+    </div>
+    <div class="top-meta" id="meta">Загрузка...</div>
   </header>
+
   <main>
     <aside>
-      <div class="toolbar">
-        <button class="primary" id="newBtn" type="button">+ Канал</button>
-        <button id="reloadBtn" type="button">↻ Reload</button>
+      <div class="side-box">
+        <h2>Что делать</h2>
+        <p>Выбери канал слева, измени настройки справа и нажми «Сохранить». После сохранения расписание применяется сразу.</p>
       </div>
+
+      <div class="side-box" id="systemBox">
+        <h2>Состояние</h2>
+        <p id="systemText">Проверяю сервис...</p>
+        <div class="system-list" id="systemList"></div>
+      </div>
+
+      <div class="toolbar">
+        <button class="primary" id="newBtn" type="button">Новый канал</button>
+        <button id="reloadBtn" type="button">Обновить</button>
+      </div>
+
       <div class="channel-list" id="channelList"></div>
       <div class="status" id="sideStatus"></div>
     </aside>
@@ -256,87 +374,147 @@ ADMIN_HTML = """
     <section class="workspace">
       <div class="panel">
         <div class="panel-head">
-          <h2 id="formTitle">Канал</h2>
-          <div class="toolbar" style="margin:0">
+          <div>
+            <h2 id="formTitle">Канал</h2>
+            <p id="formSubtitle">Основные настройки, расписание, генерация и текст промпта.</p>
+          </div>
+          <div class="toolbar">
             <button class="primary" id="saveBtn" type="button">Сохранить</button>
-            <button id="publishBtn" type="button">Опубликовать тест</button>
+            <button id="publishBtn" type="button">Тестовая публикация</button>
             <button class="danger" id="deleteBtn" type="button">Удалить</button>
           </div>
         </div>
+
         <div class="panel-body">
+          <div class="notice" id="channelNotice">
+            Выключенный канал можно сохранить и настроить, но cron не будет публиковать его автоматически.
+          </div>
+
           <form id="channelForm">
-            <div class="grid">
-              <label>Ключ
-                <input id="key" autocomplete="off" placeholder="test_ai_news">
-              </label>
-              <label>Название
-                <input id="title" autocomplete="off" placeholder="AI News">
-              </label>
-              <label>Chat ID
-                <input id="chatId" autocomplete="off" placeholder="@channel или -100...">
-              </label>
-              <label>Prompt file
-                <input id="promptFile" autocomplete="off" placeholder="prompts/test_ai_news.md">
-              </label>
-              <label>Timezone
-                <input id="timezone" autocomplete="off" value="Europe/Moscow">
-              </label>
-              <label>Cron
-                <input id="schedule" autocomplete="off" placeholder="0 10 * * *">
-              </label>
-            </div>
+            <section class="section">
+              <h3>1. Канал</h3>
+              <p class="section-note">Здесь указывается, куда бот будет публиковать посты.</p>
+              <div class="grid">
+                <label class="field">Ключ канала
+                  <input id="key" autocomplete="off" placeholder="test_ai_news">
+                  <span class="hint">Внутреннее имя без пробелов: латиница, цифры, _ или -. Используется в webhook-командах.</span>
+                </label>
+                <label class="field">Название
+                  <input id="title" autocomplete="off" placeholder="AI News">
+                  <span class="hint">Понятное имя для списка слева. На публикацию не влияет.</span>
+                </label>
+                <label class="field">Telegram chat_id
+                  <input id="chatId" autocomplete="off" placeholder="@channel или -1001234567890">
+                  <span class="hint">Для публичного канала можно @username. Для приватного обычно нужен id вида -100...</span>
+                </label>
+                <label class="field">Prompt-файл
+                  <input id="promptFile" autocomplete="off" placeholder="prompts/test_ai_news.md">
+                  <span class="hint">Файл с инструкцией для OpenAI. Новый файл будет создан в папке prompts.</span>
+                </label>
+              </div>
+            </section>
 
-            <div class="grid three">
-              <label>Модель
-                <input id="model" autocomplete="off" placeholder="пусто = default">
-              </label>
-              <label>Max output tokens
-                <input id="maxOutputTokens" type="number" min="100" max="8000" value="1200">
-              </label>
-              <label>Min seconds between posts
-                <input id="minSeconds" type="number" min="0" value="300">
-              </label>
-              <label>Reasoning effort
-                <select id="reasoningEffort">
-                  <option value="">default</option>
-                  <option value="minimal">minimal</option>
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                </select>
-              </label>
-              <label>Text verbosity
-                <select id="textVerbosity">
-                  <option value="">default</option>
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                </select>
-              </label>
-              <label>Parse mode
-                <select id="parseMode">
-                  <option value="">none</option>
-                  <option value="HTML">HTML</option>
-                  <option value="Markdown">Markdown</option>
-                  <option value="MarkdownV2">MarkdownV2</option>
-                </select>
-              </label>
-            </div>
+            <section class="section">
+              <h3>2. Расписание</h3>
+              <p class="section-note">Публикация запускается автоматически по cron в указанном часовом поясе.</p>
+              <div class="grid">
+                <label class="field">Cron
+                  <input id="schedule" autocomplete="off" placeholder="0 10 * * *">
+                  <span class="hint">Формат: минута час день месяц день-недели. Пример: 0 10 * * * = каждый день в 10:00.</span>
+                </label>
+                <label class="field">Часовой пояс
+                  <input id="timezone" autocomplete="off" value="Europe/Moscow">
+                  <span class="hint">Например: Europe/Moscow. В этом времени считается cron.</span>
+                </label>
+              </div>
+            </section>
 
-            <div class="grid three">
-              <label class="check-row"><input id="enabled" type="checkbox"> Включен</label>
-              <label class="check-row"><input id="disablePreview" type="checkbox"> Без preview ссылок</label>
-              <label class="check-row"><input id="protectContent" type="checkbox"> Protect content</label>
-            </div>
+            <section class="section">
+              <h3>3. Генерация поста</h3>
+              <p class="section-note">Эти поля управляют тем, как OpenAI пишет текст.</p>
+              <div class="grid three">
+                <label class="field">Модель
+                  <input id="model" autocomplete="off" placeholder="пусто = модель из .env">
+                  <span class="hint">Оставь пустым, если хочешь использовать OPENAI_DEFAULT_MODEL.</span>
+                </label>
+                <label class="field">Лимит ответа
+                  <input id="maxOutputTokens" type="number" min="100" max="8000" value="1200">
+                  <span class="hint">Чем больше число, тем длиннее может быть ответ. Для Telegram обычно хватает 900-1800.</span>
+                </label>
+                <label class="field">Пауза между постами
+                  <input id="minSeconds" type="number" min="0" value="300">
+                  <span class="hint">Защита от случайных повторов. 300 = минимум 5 минут.</span>
+                </label>
+                <label class="field">Reasoning effort
+                  <select id="reasoningEffort">
+                    <option value="">по умолчанию</option>
+                    <option value="minimal">minimal</option>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                  </select>
+                  <span class="hint">Обычно low достаточно для обычных постов.</span>
+                </label>
+                <label class="field">Text verbosity
+                  <select id="textVerbosity">
+                    <option value="">по умолчанию</option>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                  </select>
+                  <span class="hint">Насколько подробно модель пишет текст.</span>
+                </label>
+                <label class="field">Формат Telegram
+                  <select id="parseMode">
+                    <option value="">без форматирования</option>
+                    <option value="HTML">HTML</option>
+                    <option value="Markdown">Markdown</option>
+                    <option value="MarkdownV2">MarkdownV2</option>
+                  </select>
+                  <span class="hint">Для текущих prompt-шаблонов лучше HTML.</span>
+                </label>
+              </div>
+            </section>
 
-            <label>Context JSON
-              <textarea id="contextJson" spellcheck="false">{}</textarea>
-            </label>
+            <section class="section">
+              <h3>4. Переключатели</h3>
+              <p class="section-note">Чаще всего достаточно включить канал и оставить остальные значения как есть.</p>
+              <div class="grid three">
+                <label class="check-row">
+                  <input id="enabled" type="checkbox">
+                  <span><strong>Канал включен</strong><span class="hint">Если выключено, cron не публикует посты.</span></span>
+                </label>
+                <label class="check-row">
+                  <input id="disablePreview" type="checkbox">
+                  <span><strong>Не показывать preview ссылок</strong><span class="hint">Telegram не будет раскрывать ссылки карточками.</span></span>
+                </label>
+                <label class="check-row">
+                  <input id="protectContent" type="checkbox">
+                  <span><strong>Protect content</strong><span class="hint">Telegram ограничит пересылку и сохранение контента.</span></span>
+                </label>
+              </div>
+            </section>
 
-            <label>Prompt
-              <textarea class="prompt" id="promptContent" spellcheck="false"></textarea>
-            </label>
+            <details>
+              <summary>Дополнительные данные для промпта</summary>
+              <div class="details-body">
+                <label class="field">Context JSON
+                  <textarea id="contextJson" spellcheck="false">{}</textarea>
+                  <span class="hint">Эти данные доступны в prompt-файле как context.topic, context.audience и т.д.</span>
+                </label>
+              </div>
+            </details>
+
+            <section class="section">
+              <h3>5. Prompt</h3>
+              <p class="section-note">Это главная инструкция для OpenAI. Пиши здесь стиль, тему, ограничения и формат ответа.</p>
+              <label class="field">Текст prompt-файла
+                <textarea class="prompt" id="promptContent" spellcheck="false"></textarea>
+                <span class="hint">Можно использовать переменные: {{ date_ru }}, {{ time }}, {{ context.topic }}, {{ channel.title }}.</span>
+              </label>
+            </section>
           </form>
+
           <div class="status" id="mainStatus"></div>
           <div class="preview" id="publishPreview" hidden></div>
         </div>
@@ -347,11 +525,15 @@ ADMIN_HTML = """
   <script>
     const els = {
       meta: document.querySelector("#meta"),
+      systemText: document.querySelector("#systemText"),
+      systemList: document.querySelector("#systemList"),
       channelList: document.querySelector("#channelList"),
       sideStatus: document.querySelector("#sideStatus"),
       mainStatus: document.querySelector("#mainStatus"),
       publishPreview: document.querySelector("#publishPreview"),
       formTitle: document.querySelector("#formTitle"),
+      formSubtitle: document.querySelector("#formSubtitle"),
+      channelNotice: document.querySelector("#channelNotice"),
       newBtn: document.querySelector("#newBtn"),
       reloadBtn: document.querySelector("#reloadBtn"),
       saveBtn: document.querySelector("#saveBtn"),
@@ -376,7 +558,7 @@ ADMIN_HTML = """
       promptContent: document.querySelector("#promptContent"),
     };
 
-    let state = { channels: [], jobs: [] };
+    let state = { channels: [], jobs: [], storage: {} };
     let selectedKey = null;
     let originalKey = null;
 
@@ -390,6 +572,7 @@ ADMIN_HTML = """
           ...(options.headers || {}),
         },
       });
+
       if (response.status === 403 || response.status === 503) {
         const entered = prompt("Введите ADMIN_API_TOKEN для прямого доступа без nginx:");
         if (entered) {
@@ -397,11 +580,29 @@ ADMIN_HTML = """
           return api(path, options);
         }
       }
+
       if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || response.statusText);
+        throw new Error(await readError(response));
       }
+
       return response.json();
+    }
+
+    async function readError(response) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          const payload = await response.json();
+          if (typeof payload.detail === "string") return payload.detail;
+          if (Array.isArray(payload.detail)) {
+            return payload.detail.map((item) => item.msg || JSON.stringify(item)).join("\n");
+          }
+          return JSON.stringify(payload);
+        } catch {
+          return response.statusText;
+        }
+      }
+      return (await response.text()) || response.statusText;
     }
 
     function setStatus(target, message, kind = "") {
@@ -411,8 +612,9 @@ ADMIN_HTML = """
 
     async function loadState(selectKey = null) {
       state = await api("/api/admin/state");
+      renderSystem();
       renderList();
-      els.meta.textContent = `${state.enabled_channels}/${state.channels.length} включено · jobs: ${state.jobs.length}`;
+      els.meta.textContent = `${state.enabled_channels}/${state.channels.length} включено · задач: ${state.jobs.length}`;
       const key = selectKey || selectedKey || state.channels[0]?.key;
       if (key) {
         await selectChannel(key);
@@ -421,19 +623,45 @@ ADMIN_HTML = """
       }
     }
 
+    function renderSystem() {
+      const storage = state.storage || {};
+      const storageOk = Boolean(
+        storage.config_parent_writable &&
+        storage.config_file_writable &&
+        storage.prompts_dir_writable
+      );
+      els.systemText.textContent = storageOk
+        ? "Файлы настроек доступны для записи."
+        : "Есть проблема с правами на файлы. Сохранение может не работать.";
+      els.systemText.className = storageOk ? "small" : "small";
+      els.systemList.innerHTML = `
+        <div class="system-row"><span>Каналы</span><strong>${state.enabled_channels}/${state.channels.length}</strong></div>
+        <div class="system-row"><span>Cron-задачи</span><strong>${state.jobs.length}</strong></div>
+        <div class="system-row"><span>config writable</span><strong>${yesNo(storage.config_file_writable)}</strong></div>
+        <div class="system-row"><span>prompts writable</span><strong>${yesNo(storage.prompts_dir_writable)}</strong></div>
+      `;
+    }
+
     function renderList() {
       els.channelList.innerHTML = "";
+      if (!state.channels.length) {
+        els.channelList.innerHTML = `<div class="notice">Каналов пока нет. Нажми «Новый канал».</div>`;
+        return;
+      }
+
       for (const channel of state.channels) {
+        const nextRun = nextRunFor(channel.key);
         const button = document.createElement("button");
         button.type = "button";
         button.className = `channel-item ${channel.key === selectedKey ? "active" : ""}`;
         button.innerHTML = `
           <div class="channel-title">
             <span>${escapeHtml(channel.title)}</span>
-            <span class="badge ${channel.enabled ? "on" : "off"}">${channel.enabled ? "on" : "off"}</span>
+            <span class="badge ${channel.enabled ? "on" : "off"}">${channel.enabled ? "вкл" : "выкл"}</span>
           </div>
           <div class="channel-sub">${escapeHtml(channel.key)} · ${escapeHtml(channel.schedule)}</div>
           <div class="channel-sub">${escapeHtml(String(channel.chat_id))}</div>
+          <div class="channel-sub">${nextRun ? `Следующий запуск: ${escapeHtml(nextRun)}` : "Нет активной cron-задачи"}</div>
         `;
         button.addEventListener("click", () => selectChannel(channel.key));
         els.channelList.appendChild(button);
@@ -448,6 +676,8 @@ ADMIN_HTML = """
       renderList();
       fillForm(channel);
       els.formTitle.textContent = channel.title || channel.key;
+      els.formSubtitle.textContent = `${channel.key} · ${channel.enabled ? "автопубликация включена" : "автопубликация выключена"}`;
+      updateChannelNotice(channel);
       try {
         const prompt = await api(`/api/admin/prompts?path=${encodeURIComponent(channel.prompt_file)}`);
         els.promptContent.value = prompt.content || "";
@@ -469,7 +699,7 @@ ADMIN_HTML = """
       els.minSeconds.value = channel.min_seconds_between_posts ?? 300;
       els.reasoningEffort.value = channel.reasoning_effort || "";
       els.textVerbosity.value = channel.text_verbosity || "";
-      els.parseMode.value = channel.telegram?.parse_mode || "";
+      els.parseMode.value = channel.telegram?.parse_mode || "HTML";
       els.enabled.checked = Boolean(channel.enabled);
       els.disablePreview.checked = channel.telegram?.disable_web_page_preview !== false;
       els.protectContent.checked = Boolean(channel.telegram?.protect_content);
@@ -485,6 +715,7 @@ ADMIN_HTML = """
       } catch (error) {
         throw new Error(`Context JSON некорректный: ${error.message}`);
       }
+
       return {
         key: els.key.value.trim(),
         title: els.title.value.trim(),
@@ -508,7 +739,7 @@ ADMIN_HTML = """
     }
 
     function parseChatId(value) {
-      if (/^-?\\d+$/.test(value)) return Number(value);
+      if (/^-?\d+$/.test(value)) return Number(value);
       return value;
     }
 
@@ -523,7 +754,7 @@ ADMIN_HTML = """
       renderList();
       fillForm({
         key: "new_channel",
-        title: "New Channel",
+        title: "Новый канал",
         chat_id: "@your_channel",
         enabled: false,
         timezone: "Europe/Moscow",
@@ -539,15 +770,28 @@ ADMIN_HTML = """
         context: {
           topic: "тема канала",
           audience: "кто читает",
+          style: "практично и понятно",
         },
       });
-      els.promptContent.value = "Напиши один полезный пост для Telegram-канала на русском языке.\\n";
+      els.promptContent.value = `Ты пишешь посты для Telegram-канала "{{ channel.title }}".
+
+Тема: {{ context.topic }}
+Аудитория: {{ context.audience }}
+Дата: {{ date_ru }}
+
+Напиши один полезный пост на русском языке.
+Используй Telegram-safe HTML: <b>, <i>, <code>, <a href="">.
+Не выдумывай свежие новости и статистику без источника.
+Сделай сильный первый абзац, 3-5 практичных пунктов и короткий вывод.
+`;
       els.formTitle.textContent = "Новый канал";
+      els.formSubtitle.textContent = "Заполни поля, сохрани, затем включи канал.";
+      updateChannelNotice({ enabled: false });
     }
 
     async function saveChannel() {
       els.saveBtn.disabled = true;
-      setStatus(els.mainStatus, "Сохраняю...");
+      setStatus(els.mainStatus, "Сохраняю канал, prompt и расписание...");
       try {
         const channel = buildChannelFromForm();
         const result = await api("/api/admin/channels", {
@@ -560,10 +804,10 @@ ADMIN_HTML = """
         });
         selectedKey = result.selected_key;
         originalKey = result.selected_key;
-        setStatus(els.mainStatus, "Сохранено и применено.", "ok");
+        setStatus(els.mainStatus, "Сохранено. Расписание перечитано и уже применено.", "ok");
         await loadState(result.selected_key);
       } catch (error) {
-        setStatus(els.mainStatus, error.message, "err");
+        setStatus(els.mainStatus, friendlyError(error.message), "err");
       } finally {
         els.saveBtn.disabled = false;
       }
@@ -574,14 +818,14 @@ ADMIN_HTML = """
       if (!key) return;
       els.publishBtn.disabled = true;
       els.publishPreview.hidden = true;
-      setStatus(els.mainStatus, "Генерирую и публикую...");
+      setStatus(els.mainStatus, "Генерирую пост и отправляю его в Telegram...");
       try {
         const result = await api(`/publish/${encodeURIComponent(key)}?force=true`, { method: "POST" });
-        setStatus(els.mainStatus, "Публикация завершена.", "ok");
+        setStatus(els.mainStatus, "Тестовая публикация завершена.", "ok");
         els.publishPreview.hidden = false;
-        els.publishPreview.textContent = result.result.preview || "";
+        els.publishPreview.textContent = result.result.preview || "Telegram принял сообщение, но preview пустой.";
       } catch (error) {
-        setStatus(els.mainStatus, error.message, "err");
+        setStatus(els.mainStatus, friendlyError(error.message), "err");
       } finally {
         els.publishBtn.disabled = false;
       }
@@ -590,16 +834,16 @@ ADMIN_HTML = """
     async function deleteChannel() {
       const key = originalKey;
       if (!key) return;
-      if (!confirm(`Удалить канал ${key} из конфига? Prompt-файл останется на диске.`)) return;
+      if (!confirm(`Удалить канал ${key} из списка? Prompt-файл останется на диске.`)) return;
       els.deleteBtn.disabled = true;
       try {
         await api(`/api/admin/channels/${encodeURIComponent(key)}`, { method: "DELETE" });
-        setStatus(els.sideStatus, `Канал ${key} удалён.`, "ok");
+        setStatus(els.sideStatus, `Канал ${key} удален.`, "ok");
         selectedKey = null;
         originalKey = null;
         await loadState();
       } catch (error) {
-        setStatus(els.mainStatus, error.message, "err");
+        setStatus(els.mainStatus, friendlyError(error.message), "err");
       } finally {
         els.deleteBtn.disabled = false;
       }
@@ -610,12 +854,50 @@ ADMIN_HTML = """
       try {
         await api("/admin/reload", { method: "POST" });
         await loadState();
-        setStatus(els.sideStatus, "Конфиг перечитан.", "ok");
+        setStatus(els.sideStatus, "Конфиг перечитан. Список каналов обновлен.", "ok");
       } catch (error) {
-        setStatus(els.sideStatus, error.message, "err");
+        setStatus(els.sideStatus, friendlyError(error.message), "err");
       } finally {
         els.reloadBtn.disabled = false;
       }
+    }
+
+    function updateChannelNotice(channel) {
+      if (channel.enabled) {
+        els.channelNotice.className = "notice ok";
+        els.channelNotice.textContent = "Канал включен: cron будет автоматически публиковать посты по расписанию.";
+      } else {
+        els.channelNotice.className = "notice warn";
+        els.channelNotice.textContent = "Канал выключен: настройки можно сохранять, но автоматической публикации не будет.";
+      }
+    }
+
+    function nextRunFor(key) {
+      const job = (state.jobs || []).find((item) => item.id === `publish:${key}`);
+      if (!job?.next_run_time) return "";
+      try {
+        return new Date(job.next_run_time).toLocaleString("ru-RU");
+      } catch {
+        return job.next_run_time;
+      }
+    }
+
+    function yesNo(value) {
+      return value ? "да" : "нет";
+    }
+
+    function friendlyError(message) {
+      if (!message) return "Неизвестная ошибка.";
+      if (message.includes("Cannot write prompt file") || message.includes("Permission denied")) {
+        return `${message}\n\nНа VPS проверь права: chown -R APP_UID:APP_GID data/config data/prompts`;
+      }
+      if (message.includes("Context JSON")) {
+        return message;
+      }
+      if (message.includes("Telegram")) {
+        return `${message}\n\nПроверь, что бот добавлен администратором в канал и chat_id указан верно.`;
+      }
+      return message;
     }
 
     function escapeHtml(value) {
@@ -631,9 +913,10 @@ ADMIN_HTML = """
     els.saveBtn.addEventListener("click", saveChannel);
     els.publishBtn.addEventListener("click", publishChannel);
     els.deleteBtn.addEventListener("click", deleteChannel);
+    els.enabled.addEventListener("change", () => updateChannelNotice({ enabled: els.enabled.checked }));
 
     loadState().catch((error) => {
-      setStatus(els.sideStatus, error.message, "err");
+      setStatus(els.sideStatus, friendlyError(error.message), "err");
       els.meta.textContent = "Ошибка загрузки";
     });
   </script>
