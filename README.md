@@ -279,6 +279,18 @@ TELEGRAM_WEBHOOK_SECRET=long-random-url-secret
 ADMIN_API_TOKEN=long-random-admin-token
 ```
 
+`401 invalid_api_key` или `Incorrect API key provided` означает, что OpenAI не принял `OPENAI_API_KEY`. В GitHub secret `ENV_FILE` строка должна выглядеть так:
+
+```env
+OPENAI_API_KEY=sk-...
+```
+
+Не вставляй имя переменной второй раз. Ошибочный вариант:
+
+```env
+OPENAI_API_KEY=OPENAI_API_KEY=sk-...
+```
+
 После исправления `.env` на VPS перезапусти:
 
 ```bash

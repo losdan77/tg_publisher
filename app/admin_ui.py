@@ -888,6 +888,9 @@ ADMIN_HTML = r"""
 
     function friendlyError(message) {
       if (!message) return "Неизвестная ошибка.";
+      if (message.includes("OpenAI")) {
+        return `${message}\n\nПосле изменения ENV_FILE перезапусти GitHub Actions, чтобы контейнер получил новый .env.`;
+      }
       if (message.includes("Cannot write prompt file") || message.includes("Permission denied")) {
         return `${message}\n\nНа VPS проверь права: chown -R APP_UID:APP_GID data/config data/prompts`;
       }

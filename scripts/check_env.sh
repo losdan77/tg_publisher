@@ -41,6 +41,7 @@ required_vars=(
 
 missing=()
 placeholders=()
+invalid=()
 
 for key in "${required_vars[@]}"; do
   value="$(read_env "$key" || true)"
@@ -56,6 +57,21 @@ for key in "${required_vars[@]}"; do
   esac
 done
 
+openai_key="$(read_env OPENAI_API_KEY || true)"
+if [ -n "$openai_key" ]; then
+  case "$openai_key" in
+    sk-*) ;;
+    *)
+      invalid+=("OPENAI_API_KEY must start with sk-. Do not put OPENAI_API_KEY= inside its value.")
+      ;;
+  esac
+fi
+
+telegram_token="$(read_env TELEGRAM_BOT_TOKEN || true)"
+if [ -n "$telegram_token" ] && [[ ! "$telegram_token" =~ ^[0-9]+:[A-Za-z0-9_-]+$ ]]; then
+  invalid+=("TELEGRAM_BOT_TOKEN has an invalid format. Expected digits:token from BotFather.")
+fi
+
 if [ "${#missing[@]}" -gt 0 ]; then
   echo "Missing required variables in $env_file:" >&2
   printf '  - %s\n' "${missing[@]}" >&2
@@ -66,6 +82,12 @@ if [ "${#placeholders[@]}" -gt 0 ]; then
   echo "Placeholder values are still present in $env_file:" >&2
   printf '  - %s\n' "${placeholders[@]}" >&2
   echo "Replace them with real secrets before deploy." >&2
+  exit 1
+fi
+
+if [ "${#invalid[@]}" -gt 0 ]; then
+  echo "Invalid values in $env_file:" >&2
+  printf '  - %s\n' "${invalid[@]}" >&2
   exit 1
 fi
 

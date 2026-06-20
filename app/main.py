@@ -21,12 +21,12 @@ from app.admin_ui import ADMIN_HTML
 from app.config import ChannelsConfig, load_channels_config
 from app.config import ChannelConfig
 from app.logging_config import configure_logging
-from app.openai_client import OpenAITextClient
+from app.openai_client import OpenAIGenerationError, OpenAITextClient
 from app.prompting import PromptRenderer
 from app.publisher import Publisher
 from app.scheduler import ChannelScheduler
 from app.settings import Settings, get_settings
-from app.telegram_client import TelegramBotClient
+from app.telegram_client import TelegramApiError, TelegramBotClient
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +211,15 @@ async def publish_channel(
     force: bool = Query(default=False),
 ) -> PublishResponse:
     publisher: Publisher = request.app.state.publisher
-    result = await publisher.publish(channel_key, reason="manual", force=force)
+    try:
+        result = await publisher.publish(channel_key, reason="manual", force=force)
+    except OpenAIGenerationError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except TelegramApiError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Telegram не принял публикацию. Проверь TELEGRAM_BOT_TOKEN, chat_id и права бота. {exc}",
+        ) from exc
     return PublishResponse(ok=True, result=result.model_dump())
 
 
