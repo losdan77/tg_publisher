@@ -101,4 +101,5 @@ jobs:
 
       - name: Run deploy script
         run: |
-          ssh -i ~/.ssh/tg_publisher_key -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" "cd '$VPS_APP_DIR' && bash scripts/deploy.sh"
+          ssh -i ~/.ssh/tg_publisher_key -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
+            "cd '$VPS_APP_DIR' && bash scripts/deploy.sh && bash scripts/init_https.sh"

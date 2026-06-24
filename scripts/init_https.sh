@@ -36,12 +36,28 @@ mkdir -p data/certbot/www data/certbot/conf
 
 docker compose up -d tg-publisher nginx
 
+certbot_conf_dir="data/certbot/conf"
+cert_live_dir="${certbot_conf_dir}/live/${DOMAIN}"
+cert_renewal_file="${certbot_conf_dir}/renewal/${DOMAIN}.conf"
+bootstrap_backup="${cert_live_dir}.bootstrap-backup"
+
+# The nginx image creates a one-day self-signed certificate so it can start
+# before the first ACME request. Move only that bootstrap certificate aside;
+# Certbot then owns the canonical live/${DOMAIN} lineage used by nginx.
+if [ ! -f "$cert_renewal_file" ] && [ -d "$cert_live_dir" ]; then
+  if [ -e "$bootstrap_backup" ]; then
+    echo "Stale certificate bootstrap backup exists: $bootstrap_backup" >&2
+    exit 1
+  fi
+  mv "$cert_live_dir" "$bootstrap_backup"
+fi
+
 staging_arg=""
 if [ "${CERTBOT_STAGING:-false}" = "true" ]; then
   staging_arg="--staging"
 fi
 
-docker compose run --rm --entrypoint certbot certbot certonly \
+if ! docker compose run --rm --entrypoint certbot certbot certonly \
   --webroot \
   -w /var/www/certbot \
   --cert-name "$DOMAIN" \
@@ -50,10 +66,22 @@ docker compose run --rm --entrypoint certbot certbot certonly \
   --email "$CERTBOT_EMAIL" \
   --agree-tos \
   --no-eff-email \
+  --non-interactive \
   --expand \
-  --force-renewal \
-  $staging_arg
+  --keep-until-expiring \
+  $staging_arg; then
+  if [ -d "$bootstrap_backup" ]; then
+    rm -rf "$cert_live_dir"
+    mv "$bootstrap_backup" "$cert_live_dir"
+  fi
+  exit 1
+fi
 
+if [ -d "$bootstrap_backup" ]; then
+  rm -rf "$bootstrap_backup"
+fi
+
+docker compose exec nginx nginx -t
 docker compose exec nginx nginx -s reload
 
 echo "HTTPS is ready for https://${DOMAIN} and https://${TELEGRAM_API_PROXY_DOMAIN}"
