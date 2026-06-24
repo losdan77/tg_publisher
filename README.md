@@ -31,6 +31,7 @@ scripts/     # deploy, https, webhook
 ```text
 data/config/channels.yaml  # живой конфиг, который меняет веб-панель
 data/prompts/*.md          # живые промпты, которые меняет веб-панель
+data/history/posts.sqlite3 # история опубликованных постов по каналам
 data/certbot/              # сертификаты Let's Encrypt
 ```
 
@@ -134,6 +135,7 @@ https://tg.memeinternet.site/admin
 - добавить новый канал кнопкой `+ Канал`;
 - включить/выключить канал;
 - изменить `chat_id`, cron, timezone, модель и лимиты;
+- включить галочку `Учитывать историю постов` и выбрать количество прошлых публикаций;
 - редактировать `Context JSON`;
 - редактировать prompt-файл;
 - нажать `Сохранить`, чтобы изменения применились;
@@ -141,6 +143,11 @@ https://tg.memeinternet.site/admin
 - нажать `Reload`, если ты правил файлы руками на VPS.
 
 Первый канал в шаблоне выключен (`enabled: false`), чтобы ничего случайно не публиковалось.
+
+Успешно отправленные посты сохраняются в SQLite отдельно для каждого канала. Когда галочка
+`Учитывать историю постов` включена, последние публикации добавляются в запрос к OpenAI с
+указанием не повторять уже раскрытые темы. При выключенной галочке история продолжает
+заполняться, но не передаётся модели.
 
 ## Cron
 
@@ -226,6 +233,7 @@ TELEGRAM_WEBHOOK_SECRET_TOKEN=long-random-header-secret
 ADMIN_API_TOKEN=long-random-admin-token
 ADMIN_TELEGRAM_USER_IDS=123456789
 CHANNELS_CONFIG_PATH=config/channels.yaml
+HISTORY_DB_PATH=data/history/posts.sqlite3
 ENABLE_SCHEDULER=true
 DRY_RUN=false
 AUTO_SET_TELEGRAM_WEBHOOK=false
@@ -255,11 +263,11 @@ bash scripts/init_https.sh
 bash scripts/set_webhook_docker.sh
 ```
 
-Если веб-панель не сохраняет prompt и в логах есть `Permission denied: '/app/prompts/...'`, значит `data/prompts` или `data/config` на VPS принадлежат не тому пользователю. Исправить:
+Если веб-панель не сохраняет данные и в логах есть `Permission denied`, значит `data/prompts`, `data/config` или `data/history` на VPS принадлежат не тому пользователю. Исправить:
 
 ```bash
 cd /opt/tg-publisher
-chown -R 1000:1000 data/config data/prompts
+chown -R 1000:1000 data/config data/prompts data/history
 bash scripts/deploy.sh
 ```
 

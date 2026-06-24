@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from app.config import ChannelConfig, ChannelsConfig
 from app.openai_client import OpenAITextClient
+from app.post_history import PostHistoryError, PostHistoryStore
 from app.prompting import PromptRenderer
 from app.settings import Settings
 from app.telegram_client import SentMessage, TelegramBotClient
@@ -32,12 +33,14 @@ class Publisher:
         prompt_renderer: PromptRenderer,
         openai_client: OpenAITextClient,
         telegram_client: TelegramBotClient,
+        post_history: PostHistoryStore,
     ):
         self.settings = settings
         self.channels_config = channels_config
         self.prompt_renderer = prompt_renderer
         self.openai_client = openai_client
         self.telegram_client = telegram_client
+        self.post_history = post_history
         self._last_publish_at: dict[str, datetime] = {}
 
     def reload_config(self, channels_config: ChannelsConfig) -> None:
@@ -49,7 +52,10 @@ class Publisher:
             raise ValueError(f"Channel '{channel.key}' is disabled. Use force=true for manual testing.")
 
         self._enforce_publish_interval(channel, force=force)
-        prompt = self.prompt_renderer.render(channel, reason=reason)
+        history = None
+        if channel.history_enabled:
+            history = self.post_history.recent(channel.key, channel.history_posts_limit)
+        prompt = self.prompt_renderer.render(channel, reason=reason, post_history=history)
         logger.info("Generating post for channel=%s reason=%s", channel.key, reason)
         post_text = await self.openai_client.generate_post(channel, prompt)
 
@@ -64,6 +70,15 @@ class Publisher:
                 options=channel.telegram,
             )
             self._last_publish_at[channel.key] = datetime.now(timezone.utc)
+            try:
+                self.post_history.add(
+                    channel_key=channel.key,
+                    text=post_text,
+                    message_ids=[message.message_id for message in sent_messages],
+                    reason=reason,
+                )
+            except PostHistoryError:
+                logger.exception("Published post but failed to save history channel=%s", channel.key)
             logger.info(
                 "Published channel=%s telegram_messages=%s",
                 channel.key,
@@ -92,6 +107,8 @@ class Publisher:
                 "schedule": channel.schedule,
                 "prompt_file": str(channel.prompt_file),
                 "model": channel.model or self.settings.openai_default_model,
+                "history_enabled": channel.history_enabled,
+                "history_posts_limit": channel.history_posts_limit,
             }
             for channel in self.channels_config.channels
         ]
@@ -110,4 +127,3 @@ class Publisher:
                 f"Channel '{channel.key}' was published {seconds_since_last:.0f}s ago; "
                 f"minimum interval is {channel.min_seconds_between_posts}s."
             )
-

@@ -37,7 +37,7 @@ read_env() {
 
 bash scripts/check_env.sh .env
 
-mkdir -p data/config data/prompts data/certbot/www data/certbot/conf
+mkdir -p data/config data/prompts data/history data/certbot/www data/certbot/conf
 
 if [ ! -f data/config/channels.yaml ]; then
   cp -a config/. data/config/
@@ -53,12 +53,12 @@ app_uid="$(read_env APP_UID || printf "1000")"
 app_gid="$(read_env APP_GID || printf "1000")"
 
 if [ "$(id -u)" -eq 0 ]; then
-  chown -R "$app_uid:$app_gid" data/config data/prompts
-  echo "Set data/config and data/prompts owner to ${app_uid}:${app_gid}."
+  chown -R "$app_uid:$app_gid" data/config data/prompts data/history
+  echo "Set data/config, data/prompts and data/history owner to ${app_uid}:${app_gid}."
 else
-  if [ ! -w data/config ] || [ ! -w data/prompts ]; then
-    echo "data/config or data/prompts is not writable by the current user." >&2
-    echo "Run as root once: chown -R ${app_uid}:${app_gid} data/config data/prompts" >&2
+  if [ ! -w data/config ] || [ ! -w data/prompts ] || [ ! -w data/history ]; then
+    echo "data/config, data/prompts or data/history is not writable by the current user." >&2
+    echo "Run as root once: chown -R ${app_uid}:${app_gid} data/config data/prompts data/history" >&2
     exit 1
   fi
 fi

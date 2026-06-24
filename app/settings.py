@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     admin_telegram_user_ids: str = ""
 
     channels_config_path: Path = Path("config/channels.yaml")
+    history_db_path: Path = Path("data/history/posts.sqlite3")
     enable_scheduler: bool = True
     dry_run: bool = False
     public_base_url: str | None = None
@@ -41,6 +42,10 @@ class Settings(BaseSettings):
     @property
     def resolved_channels_config_path(self) -> Path:
         return self.resolve_path(self.channels_config_path)
+
+    @property
+    def resolved_history_db_path(self) -> Path:
+        return self.resolve_path(self.history_db_path)
 
     @property
     def telegram_token_value(self) -> str:

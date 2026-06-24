@@ -99,6 +99,7 @@ def write_prompt(project_root: Path, prompt_file: str, content: str) -> str:
 def storage_status(settings: Settings) -> dict[str, object]:
     config_path = settings.resolved_channels_config_path
     prompts_dir = settings.project_root / "prompts"
+    history_db_path = settings.resolved_history_db_path
 
     return {
         "config_path": str(config_path),
@@ -106,6 +107,8 @@ def storage_status(settings: Settings) -> dict[str, object]:
         "config_file_writable": is_writable_file(config_path),
         "prompts_dir": str(prompts_dir),
         "prompts_dir_writable": is_writable_directory(prompts_dir),
+        "history_db_path": str(history_db_path),
+        "history_db_writable": is_writable_file(history_db_path),
     }
 
 

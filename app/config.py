@@ -26,6 +26,8 @@ class ChannelConfig(BaseModel):
     text_verbosity: Literal["low", "medium", "high"] | None = None
     telegram: TelegramOptions = Field(default_factory=TelegramOptions)
     min_seconds_between_posts: int = Field(default=300, ge=0)
+    history_enabled: bool = False
+    history_posts_limit: int = Field(default=10, ge=1, le=30)
     context: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("key")

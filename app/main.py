@@ -22,6 +22,7 @@ from app.config import ChannelsConfig, load_channels_config
 from app.config import ChannelConfig
 from app.logging_config import configure_logging
 from app.openai_client import OpenAIGenerationError, OpenAITextClient
+from app.post_history import PostHistoryError, PostHistoryStore
 from app.prompting import PromptRenderer
 from app.publisher import Publisher
 from app.scheduler import ChannelScheduler
@@ -57,12 +58,14 @@ async def lifespan(app: FastAPI):
         project_root=settings.project_root,
     )
     telegram_client = TelegramBotClient(settings.telegram_token_value)
+    post_history = PostHistoryStore(settings.resolved_history_db_path)
     publisher = Publisher(
         settings=settings,
         channels_config=channels_config,
         prompt_renderer=PromptRenderer(settings.project_root),
         openai_client=OpenAITextClient(settings),
         telegram_client=telegram_client,
+        post_history=post_history,
     )
     scheduler = ChannelScheduler(publisher)
 
@@ -71,6 +74,7 @@ async def lifespan(app: FastAPI):
     app.state.publisher = publisher
     app.state.scheduler = scheduler
     app.state.telegram_client = telegram_client
+    app.state.post_history = post_history
 
     if settings.enable_scheduler:
         scheduler.start(channels_config)
@@ -159,7 +163,9 @@ async def save_admin_channel(
             write_prompt(settings.project_root, str(payload.channel.prompt_file), payload.prompt_content)
 
         channels_config = upsert_channel(settings, payload.channel, payload.original_key)
-    except AdminStorageError as exc:
+        if payload.original_key and payload.original_key != payload.channel.key:
+            request.app.state.post_history.rename_channel(payload.original_key, payload.channel.key)
+    except (AdminStorageError, PostHistoryError) as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     apply_reloaded_config(request, channels_config)

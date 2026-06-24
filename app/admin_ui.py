@@ -445,6 +445,10 @@ ADMIN_HTML = r"""
                   <input id="minSeconds" type="number" min="0" value="300">
                   <span class="hint">Защита от случайных повторов. 300 = минимум 5 минут.</span>
                 </label>
+                <label class="field">Постов в истории
+                  <input id="historyPostsLimit" type="number" min="1" max="30" value="10">
+                  <span class="hint">Сколько последних публикаций передавать модели, когда история включена.</span>
+                </label>
                 <label class="field">Reasoning effort
                   <select id="reasoningEffort">
                     <option value="">по умолчанию</option>
@@ -491,6 +495,10 @@ ADMIN_HTML = r"""
                 <label class="check-row">
                   <input id="protectContent" type="checkbox">
                   <span><strong>Protect content</strong><span class="hint">Telegram ограничит пересылку и сохранение контента.</span></span>
+                </label>
+                <label class="check-row">
+                  <input id="historyEnabled" type="checkbox">
+                  <span><strong>Учитывать историю постов</strong><span class="hint">Модель увидит последние публикации этого канала и постарается не повторяться.</span></span>
                 </label>
               </div>
             </section>
@@ -548,12 +556,14 @@ ADMIN_HTML = r"""
       model: document.querySelector("#model"),
       maxOutputTokens: document.querySelector("#maxOutputTokens"),
       minSeconds: document.querySelector("#minSeconds"),
+      historyPostsLimit: document.querySelector("#historyPostsLimit"),
       reasoningEffort: document.querySelector("#reasoningEffort"),
       textVerbosity: document.querySelector("#textVerbosity"),
       parseMode: document.querySelector("#parseMode"),
       enabled: document.querySelector("#enabled"),
       disablePreview: document.querySelector("#disablePreview"),
       protectContent: document.querySelector("#protectContent"),
+      historyEnabled: document.querySelector("#historyEnabled"),
       contextJson: document.querySelector("#contextJson"),
       promptContent: document.querySelector("#promptContent"),
     };
@@ -628,7 +638,8 @@ ADMIN_HTML = r"""
       const storageOk = Boolean(
         storage.config_parent_writable &&
         storage.config_file_writable &&
-        storage.prompts_dir_writable
+        storage.prompts_dir_writable &&
+        storage.history_db_writable
       );
       els.systemText.textContent = storageOk
         ? "Файлы настроек доступны для записи."
@@ -639,6 +650,7 @@ ADMIN_HTML = r"""
         <div class="system-row"><span>Cron-задачи</span><strong>${state.jobs.length}</strong></div>
         <div class="system-row"><span>config writable</span><strong>${yesNo(storage.config_file_writable)}</strong></div>
         <div class="system-row"><span>prompts writable</span><strong>${yesNo(storage.prompts_dir_writable)}</strong></div>
+        <div class="system-row"><span>history writable</span><strong>${yesNo(storage.history_db_writable)}</strong></div>
       `;
     }
 
@@ -697,12 +709,14 @@ ADMIN_HTML = r"""
       els.model.value = channel.model || "";
       els.maxOutputTokens.value = channel.max_output_tokens || 1200;
       els.minSeconds.value = channel.min_seconds_between_posts ?? 300;
+      els.historyPostsLimit.value = channel.history_posts_limit ?? 10;
       els.reasoningEffort.value = channel.reasoning_effort || "";
       els.textVerbosity.value = channel.text_verbosity || "";
       els.parseMode.value = channel.telegram?.parse_mode || "HTML";
       els.enabled.checked = Boolean(channel.enabled);
       els.disablePreview.checked = channel.telegram?.disable_web_page_preview !== false;
       els.protectContent.checked = Boolean(channel.telegram?.protect_content);
+      els.historyEnabled.checked = Boolean(channel.history_enabled);
       els.contextJson.value = JSON.stringify(channel.context || {}, null, 2);
       els.publishPreview.hidden = true;
       setStatus(els.mainStatus, "");
@@ -734,6 +748,8 @@ ADMIN_HTML = r"""
           protect_content: els.protectContent.checked,
         },
         min_seconds_between_posts: Number(els.minSeconds.value || 0),
+        history_enabled: els.historyEnabled.checked,
+        history_posts_limit: Number(els.historyPostsLimit.value || 10),
         context,
       };
     }
@@ -762,6 +778,8 @@ ADMIN_HTML = r"""
         prompt_file: "prompts/new_channel.md",
         max_output_tokens: 1200,
         min_seconds_between_posts: 300,
+        history_enabled: false,
+        history_posts_limit: 10,
         telegram: {
           parse_mode: "HTML",
           disable_web_page_preview: true,

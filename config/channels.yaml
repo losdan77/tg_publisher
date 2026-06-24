@@ -15,8 +15,9 @@ channels:
       disable_web_page_preview: true
       protect_content: false
     min_seconds_between_posts: 300
+    history_enabled: false
+    history_posts_limit: 10
     context:
       topic: "AI, automation, and useful tools"
       audience: "founders, developers, and operators"
       style: "practical, concise, calm"
-
