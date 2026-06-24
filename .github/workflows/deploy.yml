@@ -37,6 +37,17 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest -q
 
+      - name: Validate nginx config
+        run: |
+          docker build -t tg-publisher-nginx-test deploy/nginx
+          docker run --rm \
+            -e DOMAIN=tg.memeinternet.site \
+            -e TELEGRAM_API_PROXY_DOMAIN=tg-api-test.memeinternet.site \
+            -e NGINX_BASIC_AUTH_USER=test \
+            -e NGINX_BASIC_AUTH_PASSWORD=test-password \
+            -e ADMIN_API_TOKEN=test-admin-token \
+            tg-publisher-nginx-test nginx -t
+
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest

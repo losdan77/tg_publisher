@@ -27,6 +27,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      TELEGRAM_API_PROXY_DOMAIN: "${TELEGRAM_API_PROXY_DOMAIN:-tg-api-test.memeinternet.site}"
     depends_on:
       - tg-publisher
     ports:
