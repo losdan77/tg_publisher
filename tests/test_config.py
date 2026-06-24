@@ -10,6 +10,7 @@ def test_load_channels_config() -> None:
     assert len(config.channels) == 1
     assert config.channels[0].key == "test_ai_news"
     assert config.channels[0].enabled is False
+    assert config.channels[0].image.mode == "none"
 
 
 def test_duplicate_channel_keys_are_rejected(tmp_path: Path) -> None:
@@ -39,4 +40,3 @@ channels:
         assert "duplicate channel keys" in str(exc)
     else:
         raise AssertionError("duplicate keys should fail validation")
-

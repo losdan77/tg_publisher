@@ -10,6 +10,14 @@ channels:
     max_output_tokens: 1200
     reasoning_effort: low
     text_verbosity: low
+    image:
+      mode: "none"
+      prompt: ""
+      model: null
+      size: "1536x1024"
+      quality: "medium"
+      search_orientation: "landscape"
+      fallback_to_text: true
     telegram:
       parse_mode: "HTML"
       disable_web_page_preview: true
@@ -30,6 +38,13 @@ channels:
     schedule: "30 18 * * 1-5"
     prompt_file: "prompts/second_channel.md"
     max_output_tokens: 900
+    image:
+      mode: "none"
+      prompt: ""
+      size: "1536x1024"
+      quality: "medium"
+      search_orientation: "landscape"
+      fallback_to_text: true
     history_enabled: false
     history_posts_limit: 10
     telegram:

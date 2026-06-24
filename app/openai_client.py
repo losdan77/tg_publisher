@@ -24,6 +24,9 @@ class OpenAITextClient:
             timeout=settings.openai_timeout_seconds,
         )
 
+    async def close(self) -> None:
+        await self.client.close()
+
     async def generate_post(self, channel: ChannelConfig, prompt: str) -> str:
         request: dict[str, Any] = {
             "model": channel.model or self.settings.openai_default_model,
@@ -38,6 +41,40 @@ class OpenAITextClient:
         if channel.text_verbosity is not None:
             request["text"] = {"verbosity": channel.text_verbosity}
 
+        return await self._generate_text(
+            request,
+            empty_message="OpenAI вернул пустой ответ. Попробуй ещё раз или измени prompt.",
+        )
+
+    async def generate_image_brief(self, channel: ChannelConfig, post_text: str) -> str:
+        visual_direction = channel.image.prompt.strip() or (
+            "Clean editorial photography, natural composition, no text, no logos, no watermarks."
+        )
+        if channel.image.mode == "search":
+            task = (
+                "Return only a concise stock-photo search query in English: 3-7 concrete keywords. "
+                "Describe visible subjects and setting; do not include explanations, quotes or camera parameters."
+            )
+        else:
+            task = (
+                "Return only a detailed image-generation prompt in English, 80-160 words. "
+                "Create one coherent scene that illustrates the post. Do not request visible text, logos or watermarks."
+            )
+
+        request: dict[str, Any] = {
+            "model": channel.model or self.settings.openai_default_model,
+            "input": (
+                f"{task}\n\nChannel visual direction:\n{visual_direction}\n\n"
+                f"Telegram post:\n{post_text[:6000]}"
+            ),
+            "max_output_tokens": 300,
+        }
+        return await self._generate_text(
+            request,
+            empty_message="OpenAI не смог сформировать описание изображения.",
+        )
+
+    async def _generate_text(self, request: dict[str, Any], empty_message: str) -> str:
         try:
             response = await self.client.responses.create(**request)
         except AuthenticationError as exc:
@@ -61,7 +98,7 @@ class OpenAITextClient:
 
         text = extract_response_text(response)
         if not text:
-            raise OpenAIGenerationError("OpenAI вернул пустой ответ. Попробуй ещё раз или измени prompt.")
+            raise OpenAIGenerationError(empty_message)
         return text
 
 

@@ -10,6 +10,14 @@ channels:
     max_output_tokens: 1200
     reasoning_effort: low
     text_verbosity: low
+    image:
+      mode: "none"
+      prompt: ""
+      model: null
+      size: "1536x1024"
+      quality: "medium"
+      search_orientation: "landscape"
+      fallback_to_text: true
     telegram:
       parse_mode: "HTML"
       disable_web_page_preview: true

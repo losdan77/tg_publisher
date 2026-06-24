@@ -481,7 +481,59 @@ ADMIN_HTML = r"""
             </section>
 
             <section class="section">
-              <h3>4. Переключатели</h3>
+              <h3>4. Изображение к посту</h3>
+              <p class="section-note">Картинка создаётся или подбирается после написания текста и учитывает содержание конкретного поста.</p>
+              <div class="grid three">
+                <label class="field">Режим изображения
+                  <select id="imageMode">
+                    <option value="none">не добавлять</option>
+                    <option value="generate">генерировать через OpenAI</option>
+                    <option value="search">искать фотографию в Pexels</option>
+                  </select>
+                  <span class="hint">Для поиска требуется PEXELS_API_KEY в ENV_FILE.</span>
+                </label>
+                <label class="field">Модель изображения
+                  <input id="imageModel" autocomplete="off" placeholder="пусто = OPENAI_IMAGE_MODEL">
+                  <span class="hint">Используется только в режиме генерации.</span>
+                </label>
+                <label class="field">Размер
+                  <select id="imageSize">
+                    <option value="1536x1024">горизонтальный 1536×1024</option>
+                    <option value="1024x1024">квадратный 1024×1024</option>
+                    <option value="1024x1536">вертикальный 1024×1536</option>
+                  </select>
+                  <span class="hint">Размер генерируемой картинки.</span>
+                </label>
+                <label class="field">Качество генерации
+                  <select id="imageQuality">
+                    <option value="low">low</option>
+                    <option value="medium" selected>medium</option>
+                    <option value="high">high</option>
+                    <option value="auto">auto</option>
+                  </select>
+                  <span class="hint">Более высокое качество обычно стоит дороже.</span>
+                </label>
+                <label class="field">Ориентация поиска
+                  <select id="imageSearchOrientation">
+                    <option value="landscape">горизонтальная</option>
+                    <option value="square">квадратная</option>
+                    <option value="portrait">вертикальная</option>
+                  </select>
+                  <span class="hint">Применяется только при поиске в Pexels.</span>
+                </label>
+                <label class="check-row">
+                  <input id="imageFallbackToText" type="checkbox" checked>
+                  <span><strong>Публиковать текст при ошибке картинки</strong><span class="hint">Канал продолжит работать, даже если генератор или поиск временно недоступен.</span></span>
+                </label>
+              </div>
+              <label class="field">Авторский визуальный стиль
+                <textarea id="imagePrompt" spellcheck="false" placeholder="Например: кинематографичная журнальная фотография, тёплый контровой свет, глубокие синие и янтарные оттенки, без текста и логотипов"></textarea>
+                <span class="hint">Это постоянное визуальное ТЗ канала. Сервис объединит его с содержанием каждого нового поста.</span>
+              </label>
+            </section>
+
+            <section class="section">
+              <h3>5. Переключатели</h3>
               <p class="section-note">Чаще всего достаточно включить канал и оставить остальные значения как есть.</p>
               <div class="grid three">
                 <label class="check-row">
@@ -514,7 +566,7 @@ ADMIN_HTML = r"""
             </details>
 
             <section class="section">
-              <h3>5. Prompt</h3>
+              <h3>6. Prompt</h3>
               <p class="section-note">Это главная инструкция для OpenAI. Пиши здесь стиль, тему, ограничения и формат ответа.</p>
               <label class="field">Текст prompt-файла
                 <textarea class="prompt" id="promptContent" spellcheck="false"></textarea>
@@ -557,6 +609,13 @@ ADMIN_HTML = r"""
       maxOutputTokens: document.querySelector("#maxOutputTokens"),
       minSeconds: document.querySelector("#minSeconds"),
       historyPostsLimit: document.querySelector("#historyPostsLimit"),
+      imageMode: document.querySelector("#imageMode"),
+      imageModel: document.querySelector("#imageModel"),
+      imageSize: document.querySelector("#imageSize"),
+      imageQuality: document.querySelector("#imageQuality"),
+      imageSearchOrientation: document.querySelector("#imageSearchOrientation"),
+      imageFallbackToText: document.querySelector("#imageFallbackToText"),
+      imagePrompt: document.querySelector("#imagePrompt"),
       reasoningEffort: document.querySelector("#reasoningEffort"),
       textVerbosity: document.querySelector("#textVerbosity"),
       parseMode: document.querySelector("#parseMode"),
@@ -710,6 +769,13 @@ ADMIN_HTML = r"""
       els.maxOutputTokens.value = channel.max_output_tokens || 1200;
       els.minSeconds.value = channel.min_seconds_between_posts ?? 300;
       els.historyPostsLimit.value = channel.history_posts_limit ?? 10;
+      els.imageMode.value = channel.image?.mode || "none";
+      els.imageModel.value = channel.image?.model || "";
+      els.imageSize.value = channel.image?.size || "1536x1024";
+      els.imageQuality.value = channel.image?.quality || "medium";
+      els.imageSearchOrientation.value = channel.image?.search_orientation || "landscape";
+      els.imageFallbackToText.checked = channel.image?.fallback_to_text !== false;
+      els.imagePrompt.value = channel.image?.prompt || "";
       els.reasoningEffort.value = channel.reasoning_effort || "";
       els.textVerbosity.value = channel.text_verbosity || "";
       els.parseMode.value = channel.telegram?.parse_mode || "HTML";
@@ -718,6 +784,7 @@ ADMIN_HTML = r"""
       els.protectContent.checked = Boolean(channel.telegram?.protect_content);
       els.historyEnabled.checked = Boolean(channel.history_enabled);
       els.contextJson.value = JSON.stringify(channel.context || {}, null, 2);
+      updateImageFields();
       els.publishPreview.hidden = true;
       setStatus(els.mainStatus, "");
     }
@@ -740,6 +807,15 @@ ADMIN_HTML = r"""
         prompt_file: els.promptFile.value.trim(),
         model: emptyToNull(els.model.value),
         max_output_tokens: Number(els.maxOutputTokens.value || 1200),
+        image: {
+          mode: els.imageMode.value,
+          prompt: els.imagePrompt.value.trim(),
+          model: emptyToNull(els.imageModel.value),
+          size: els.imageSize.value,
+          quality: els.imageQuality.value,
+          search_orientation: els.imageSearchOrientation.value,
+          fallback_to_text: els.imageFallbackToText.checked,
+        },
         reasoning_effort: emptyToNull(els.reasoningEffort.value),
         text_verbosity: emptyToNull(els.textVerbosity.value),
         telegram: {
@@ -780,6 +856,15 @@ ADMIN_HTML = r"""
         min_seconds_between_posts: 300,
         history_enabled: false,
         history_posts_limit: 10,
+        image: {
+          mode: "none",
+          prompt: "",
+          model: null,
+          size: "1536x1024",
+          quality: "medium",
+          search_orientation: "landscape",
+          fallback_to_text: true,
+        },
         telegram: {
           parse_mode: "HTML",
           disable_web_page_preview: true,
@@ -839,7 +924,12 @@ ADMIN_HTML = r"""
       setStatus(els.mainStatus, "Генерирую пост и отправляю его в Telegram...");
       try {
         const result = await api(`/publish/${encodeURIComponent(key)}?force=true`, { method: "POST" });
-        setStatus(els.mainStatus, "Тестовая публикация завершена.", "ok");
+        const imageStatus = result.result.image_delivered
+          ? " Изображение добавлено."
+          : result.result.image_error
+            ? ` Пост опубликован без картинки: ${result.result.image_error}`
+            : "";
+        setStatus(els.mainStatus, `Тестовая публикация завершена.${imageStatus}`, result.result.image_error ? "warn" : "ok");
         els.publishPreview.hidden = false;
         els.publishPreview.textContent = result.result.preview || "Telegram принял сообщение, но preview пустой.";
       } catch (error) {
@@ -904,6 +994,16 @@ ADMIN_HTML = r"""
       return value ? "да" : "нет";
     }
 
+    function updateImageFields() {
+      const mode = els.imageMode.value;
+      els.imageModel.disabled = mode !== "generate";
+      els.imageSize.disabled = mode !== "generate";
+      els.imageQuality.disabled = mode !== "generate";
+      els.imageSearchOrientation.disabled = mode !== "search";
+      els.imagePrompt.disabled = mode === "none";
+      els.imageFallbackToText.disabled = mode === "none";
+    }
+
     function friendlyError(message) {
       if (!message) return "Неизвестная ошибка.";
       if (message.includes("OpenAI")) {
@@ -935,7 +1035,9 @@ ADMIN_HTML = r"""
     els.publishBtn.addEventListener("click", publishChannel);
     els.deleteBtn.addEventListener("click", deleteChannel);
     els.enabled.addEventListener("change", () => updateChannelNotice({ enabled: els.enabled.checked }));
+    els.imageMode.addEventListener("change", updateImageFields);
 
+    updateImageFields();
     loadState().catch((error) => {
       setStatus(els.sideStatus, friendlyError(error.message), "err");
       els.meta.textContent = "Ошибка загрузки";

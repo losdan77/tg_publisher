@@ -20,7 +20,10 @@ class Settings(BaseSettings):
 
     openai_api_key: SecretStr
     openai_default_model: str = "gpt-5.5"
+    openai_image_model: str = "gpt-image-1.5"
     openai_timeout_seconds: float = 60.0
+    image_timeout_seconds: float = 120.0
+    pexels_api_key: SecretStr | None = None
 
     telegram_bot_token: SecretStr
     telegram_webhook_secret: str
@@ -54,6 +57,12 @@ class Settings(BaseSettings):
     @property
     def openai_key_value(self) -> str:
         return self.openai_api_key.get_secret_value()
+
+    @property
+    def pexels_key_value(self) -> str | None:
+        if self.pexels_api_key is None:
+            return None
+        return self.pexels_api_key.get_secret_value()
 
     @property
     def admin_api_token_value(self) -> str | None:

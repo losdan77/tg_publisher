@@ -11,6 +11,16 @@ class TelegramOptions(BaseModel):
     protect_content: bool = False
 
 
+class ChannelImageOptions(BaseModel):
+    mode: Literal["none", "generate", "search"] = "none"
+    prompt: str = Field(default="", max_length=4000)
+    model: str | None = None
+    size: Literal["1024x1024", "1536x1024", "1024x1536"] = "1536x1024"
+    quality: Literal["low", "medium", "high", "auto"] = "medium"
+    search_orientation: Literal["landscape", "portrait", "square"] = "landscape"
+    fallback_to_text: bool = True
+
+
 class ChannelConfig(BaseModel):
     key: str = Field(min_length=2, max_length=64)
     title: str = Field(min_length=1, max_length=160)
@@ -24,6 +34,7 @@ class ChannelConfig(BaseModel):
     temperature: float | None = Field(default=None, ge=0, le=2)
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
     text_verbosity: Literal["low", "medium", "high"] | None = None
+    image: ChannelImageOptions = Field(default_factory=ChannelImageOptions)
     telegram: TelegramOptions = Field(default_factory=TelegramOptions)
     min_seconds_between_posts: int = Field(default=300, ge=0)
     history_enabled: bool = False

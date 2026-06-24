@@ -54,6 +54,37 @@ class TelegramBotClient:
 
         return sent
 
+    async def send_photo(
+        self,
+        chat_id: str | int,
+        photo: bytes,
+        filename: str,
+        mime_type: str,
+        caption: str | None = None,
+        options: TelegramOptions | None = None,
+    ) -> SentMessage:
+        options = options or TelegramOptions(parse_mode=None)
+        payload: dict[str, Any] = {
+            "chat_id": str(chat_id),
+            "protect_content": str(options.protect_content).lower(),
+        }
+        if caption:
+            payload["caption"] = caption
+        if options.parse_mode:
+            payload["parse_mode"] = options.parse_mode
+
+        response = await self.http.post(
+            f"{self.base_url}/sendPhoto",
+            data=payload,
+            files={"photo": (filename, photo, mime_type)},
+        )
+        data = parse_telegram_response(response, "sendPhoto")
+        result = data.get("result", {})
+        return SentMessage(
+            chat_id=result.get("chat", {}).get("id", chat_id),
+            message_id=int(result["message_id"]),
+        )
+
     async def set_webhook(self, url: str, secret_token: str | None = None) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "url": url,
@@ -66,15 +97,19 @@ class TelegramBotClient:
 
     async def _post(self, method: str, payload: dict[str, Any]) -> dict[str, Any]:
         response = await self.http.post(f"{self.base_url}/{method}", json=payload)
-        try:
-            data = response.json()
-        except ValueError as exc:
-            raise TelegramApiError(f"Telegram returned non-JSON response: {response.text}") from exc
+        return parse_telegram_response(response, method)
 
-        if response.status_code >= 400 or not data.get("ok"):
-            description = data.get("description", response.text)
-            raise TelegramApiError(f"Telegram {method} failed: {description}")
-        return data
+
+def parse_telegram_response(response: httpx.Response, method: str) -> dict[str, Any]:
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise TelegramApiError(f"Telegram returned non-JSON response: {response.text}") from exc
+
+    if response.status_code >= 400 or not data.get("ok"):
+        description = data.get("description", response.text)
+        raise TelegramApiError(f"Telegram {method} failed: {description}")
+    return data
 
 
 def split_telegram_text(text: str, limit: int = 3900) -> list[str]:

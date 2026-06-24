@@ -20,6 +20,7 @@ from app.admin_storage import (
 from app.admin_ui import ADMIN_HTML
 from app.config import ChannelsConfig, load_channels_config
 from app.config import ChannelConfig
+from app.image_service import ImagePreparationError, PostImageService
 from app.logging_config import configure_logging
 from app.openai_client import OpenAIGenerationError, OpenAITextClient
 from app.post_history import PostHistoryError, PostHistoryStore
@@ -59,13 +60,16 @@ async def lifespan(app: FastAPI):
     )
     telegram_client = TelegramBotClient(settings.telegram_token_value)
     post_history = PostHistoryStore(settings.resolved_history_db_path)
+    openai_client = OpenAITextClient(settings)
+    image_service = PostImageService(settings, openai_client)
     publisher = Publisher(
         settings=settings,
         channels_config=channels_config,
         prompt_renderer=PromptRenderer(settings.project_root),
-        openai_client=OpenAITextClient(settings),
+        openai_client=openai_client,
         telegram_client=telegram_client,
         post_history=post_history,
+        image_service=image_service,
     )
     scheduler = ChannelScheduler(publisher)
 
@@ -86,6 +90,8 @@ async def lifespan(app: FastAPI):
     finally:
         scheduler.shutdown()
         await telegram_client.close()
+        await image_service.close()
+        await openai_client.close()
 
 
 app = FastAPI(
@@ -219,7 +225,7 @@ async def publish_channel(
     publisher: Publisher = request.app.state.publisher
     try:
         result = await publisher.publish(channel_key, reason="manual", force=force)
-    except OpenAIGenerationError as exc:
+    except (OpenAIGenerationError, ImagePreparationError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except TelegramApiError as exc:
         raise HTTPException(
